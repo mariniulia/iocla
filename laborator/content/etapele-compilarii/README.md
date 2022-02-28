@@ -1,8 +1,6 @@
 # Laborator 03: Compilare
 
-TODO: Start text
-
-Etapele prin care trece un program din momentul în care este scris până când este rulat ca un proces sunt, in ordine:
+Etapele prin care trece un program scris în `C` din momentul în care este scris până când este rulat ca un proces sunt, in ordine:
 
 - preprocesare
 - compilare
@@ -13,97 +11,21 @@ Etapele prin care trece un program din momentul în care este scris până când
 
 ![phases-full.png](https://ocw.cs.pub.ro/courses/_media/iocla/laboratoare/phases-full.png?cache=)
 
-În etapa de `compilare` codul este tradus din cod de nivel înalt în limbaj de asamblare. Limbajul de asamblare este
-o formă human-readable a ce ajunge procesorul să execute efectiv. Dacă programele scrise în limbaje de nivel înalt ajung
-să fie portate ușor pentru procesoare diferite (arm, powerpc, x86, etc.), cele scrise în limbaj de asamblare sunt
-implementări specifice unei anumite arhitecturi. Limbaje de nivel înalt reprezintă o formă mai abstractă de rezolvare a
-unei probleme, din punctul de vedere al unui procesor, motiv pentru care și acestea trebuie traduse în limbaj de asamblare
-în cele din urmă, pentru a se putea ajunge la un binar care poate fi rulat. Mai multe detalii în laboratorul următor.
+## Preprocesare
 
-Majoritatea compilatoarelor oferă opțiunea de a genera și un fișier cu programul scris în limbaj de asamblare.
+În cadrul primei etape, cea de `preprocesare` au loc următoarele acțiuni plecând de la fișierul cod sursă:
+* eliminarea comentariilor
+* expandarea directivelor care încep cu simbolul `#`
+    * înlocuirea valorilor corespunzătoare pentru `#define ...`
+    * includerea conținutului fișierelor date ca parametru directivei `#include`
 
->**NOTE**: În cazul compilatorului `gcc` este de ajuns să adăugați flag-ul `-S` și vă va genera un
-fișier `*.s` cu codul aferent. În arhiva de `TODO` aveți un exemplu de trecere a unui program
-foarte simplu `hello.c` prin cele patru faze. Îl puteți testa pe un sistem Unix/Linux și pe un sistem Windows cu suport de MinGW.
-```shell
-$ make
-cc  -E -o hello.i hello.c
-cc -Wall -S -o hello.s hello.i
-cc  -c -o hello.o hello.s
-cc  -o hello hello.o
+## Compilare
 
-$ ls
-Makefile  hello  hello.c  hello.i  hello.o  hello.s
-
-$ ./hello
-Hello, World!
-
-$ tail -10 hello.i
-
-
-# 5 "hello.c"
-int main(void)
-{
- puts("Hello, World!");
-
- return 0;
-}
-
-$ cat hello.s
-	.file	"hello.c"
-	.section	.rodata
-.LC0:
-	.string	"Hello, World!"
-	.text
-	.globl	main
-	.type	main, @function
-main:
-.LFB0:
-	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
-	movl	$.LC0, %edi
-	call	puts
-	movl	$0, %eax
-	popq	%rbp
-	.cfi_def_cfa 7, 8
-	ret
-	.cfi_endproc
-.LFE0:
-	.size	main, .-main
-	.ident	"GCC: (Debian 5.2.1-17) 5.2.1 20150911"
-	.section	.note.GNU-stack,"",@progbits
-
-$ file hello.o
-hello.o: ELF 64-bit LSB relocatable, x86-64, [...]
-
-$ file hello
-hello: ELF 64-bit LSB executable, x86-64, [...]
-
-$ objdump -d hello.o
-
-hello.o:     file format elf64-x86-64
-
-
-Disassembly of section .text:
-
-0000000000000000 <main>:
-   0:	55                   	push   %rbp
-   1:	48 89 e5             	mov    %rsp,%rbp
-   4:	bf 00 00 00 00       	mov    $0x0,%edi
-   9:	e8 00 00 00 00       	callq  e <main+0xe>
-   e:	b8 00 00 00 00       	mov    $0x0,%eax
-  13:	5d                   	pop    %rbp
-  14:	c3                   	retq
-```
-
-Pentru a genera sintaxa intel pe 32 de biți, se pot folosi aceste opțiuni:
-```shell
-cc -Wall -m32 -S -masm=intel  -o hello.s hello.i
-```
+În etapa de `compilare` au loc următoarele subetape:
+* analiza lexicală - verificarea limbajului
+* analiza sintactică - verificarea ordinii cuvintelor (`;` vine la finalul asignării unei variabile)
+* analiza semantică - determinarea sensului codului scris (determinarea contextului variabilelor)
+* generarea de cod în limbaj de asamblare care este o formă human-readable a ce ajunge procesorul să execute efectiv
 
 ## Assembly / Asamblare
 
@@ -326,181 +248,6 @@ Hex dump of section '.rodata':
   0x080484e8 6f726c64 2100                       orld!.
 ```
 
-TODO: Exercises
-
-<!-- 
-În acest laborator, vom trece prin fiecare nivel de procesare al unui limbaj de nivel înalt și prin toolchain-ul
-pe care îl vom folosi de acum încolo.
-
-## C basics: GOTOs
-
-Un concept mai puțin abordat în tutoriale de C este instrucțiunea goto. Prin instrucțiunea goto, un program poate
-sări în puncte intermediare în cadrul unei funcții. Aceste puncte intermediare se numesc label-uri (etichete).
-Din punct de vedere al sintaxei, o eticheta consta dintr-un nume, urmat de caracterul `:`.
-
-Un exemplu de cod: 
-
- 
- ```C
-#include <stdio.h>
-
-int main()
-{
-    int i, j, k;
-    /* some code */
-do_some_work:
-    /* some other code */
-    work();
-    if (any_work())
-        goto do_some_work;
-    /* some code */
-    return 0;
-}
-```
-
-Programul execută un job prin work(). În caz că mai sunt alte joburi neterminate, executia programului sare la
-eticheta do_some_work. do_some_work marcheaza punctul din program în care începe procesarea unui nou job. Pentru a
-sări la acest punct se folosește instrucțiunea goto urmată de numele etichetei declarate. Prin diferite combinații
-de if-uri si goto-uri se pot echivala alte instrucțiuni din C, cum ar fi else, for si while.
-
-Codul dat exemplu mai sus ar putea fi un candidat care să înlocuiască o instrucțiune `do { … } while ();`:
-
-```C
-#include <stdio.h>
- 
-int main()
-{
-    int i, j, k;
-    /* some code */
-    do {
-        /* some other code */
-        work();
-    } while (any_work());
-    /* some code */
-    return 0;
-}
-```
-
-### The "WHYs" of goto
-
-Această instrucțiune nu doar că adesea lipsește din tutorialele de C, dar se fac
-recomandări împotriva abordării ei deoarece de cele mai multe ori duce la cod ofuscat
-(greu de înțeles, întreținut și depanat). Există totuși cazuri în care este folosita.
-În codul kernel-ului de Linux (exemplu), instrucțiunile de goto sunt folosite ca o formă
-de try-catch din limbaje de nivel mai înalt (precum C++, Java, C#, etc.). Exemplu:
-
-```C
-int process_data_from_mouse_device(...)
-{
-    int err;
-    int x, y;
- 
-    /* >>try<< instructions */
-    err = init_communication_with_mouse();
-    if (err)
-        goto error;
- 
-    err = get_x_coord_from_mouse(&x);
-    if (err)
-        goto error;
- 
-    err = get_y_coord_from_mouse(&y);
-    if (err)
-        goto error;
- 
-    err = announce_upper_layers_of_mouse_movement(x, y);
-    if (err)
-        goto error;
- 
-    err = close_communication_with_mouse();
-    if (err)
-        goto error;
- 
-    return 0;
- 
-    /* >>catch<< instructions' exceptions */
-error:
-    print_message("Failed to get data from mouse device. Error = %d", err);
-    return err;
-}
-```
-
-Acest cod încearcă să proceseze datele venite de la un mouse și să le
-paseze altor părți superioare din kernel care le-ar putea folosi. În caz că apare vreo
-eroare, se afișează un mesaj de eroare și se termină procesarea datelor. Codul pare corect,
-dar nu este complet. Nu este complet pentru că în caz că apare o eroare în mijlocul funcției,
-comunicația cu mouse-ul este lăsată deschisă. O variantă îmbunătățită ar fi următoarea:
-
-```C
-int process_data_from_mouse_device(...)
-{
-    int err;
-    int x, y;
- 
-    /* >>try<< instructions */
-    err = init_communication_with_mouse();
-    if (err)
-        goto error;
- 
-    err = get_x_coord_from_mouse(&x);
-    if (err)
-        goto error_close_connection;
- 
-    err = get_y_coord_from_mouse(&y);
-    if (err)
-        goto error_close_connection;
- 
-    err = announce_upper_layers_of_mouse_movement(x, y);
-    if (err)
-        goto error_close_connection;
- 
-    err = close_communication_with_mouse();
-    if (err)
-        goto error;
- 
-    return 0;
- 
-    /* >>catch<< instructions' exceptions */
-error_close_connection:
-    close_communication_with_mouse();
-error:
-    print_message("Failed to get data from mouse device. Error = %d", err);
-    return err;
-}
-```
-
-În varianta îmbunătățită, dacă apare o eroare, se face și o parte de curățenie:
-conexiunea cu mouse-ul va fi închisă, și apoi codul va continua cu tratarea generală a oricărei
-erori din program (afișarea unui mesaj de eroare).
-
->**NOTE**: De ce abordează acest curs/laborator un astfel de subiect?<br>
-Când vom studia limbajul de asamblare vom observa că o bună parte din workflow seamănă cu un program format din goto-uri, 
-chiar dacă majoritatea instrucțiunilor unui limbaj de nivel înalt, chiar și precum C, sunt inexistente. Gândirea și
-programarea cu goto-uri ne pregătește pentru lucrul în limbajul de asamblare.
-
->**WARNING**: În orice alt caz, această formă de programare ar trebui evitată pe cât posibil. 
-![goto.png]( https://imgs.xkcd.com/comics/goto.png)
-
-## De la C la program în rulare
-
-Etapele prin care trece un program din momentul în care este scris până când este rulat ca un proces sunt, in ordine:
-
-- preprocesare
-- compilare
-- asamblare
-- link editare
-
-În imaginea de mai jos sunt reprezentate si detaliate aceste etape:
-
-![phases-full.png](https://ocw.cs.pub.ro/courses/_media/iocla/laboratoare/phases-full.png?cache=)
-
-În etapa de `compilare` codul este tradus din cod de nivel înalt în limbaj de asamblare. Limbajul de asamblare este
-o formă human-readable a ce ajunge procesorul să execute efectiv. Dacă programele scrise în limbaje de nivel înalt ajung
-să fie portate ușor pentru procesoare diferite (arm, powerpc, x86, etc.), cele scrise în limbaj de asamblare sunt
-implementări specifice unei anumite arhitecturi. Limbaje de nivel înalt reprezintă o formă mai abstractă de rezolvare a
-unei probleme, din punctul de vedere al unui procesor, motiv pentru care și acestea trebuie traduse în limbaj de asamblare
-în cele din urmă, pentru a se putea ajunge la un binar care poate fi rulat. Mai multe detalii în laboratorul următor.
-
 Majoritatea compilatoarelor oferă opțiunea de a genera și un fișier cu programul scris în limbaj de asamblare.
 
 >**NOTE**: În cazul compilatorului `gcc` este de ajuns să adăugați flag-ul `-S` și vă va genera un
@@ -586,169 +333,152 @@ Pentru a genera sintaxa intel pe 32 de biți, se pot folosi aceste opțiuni:
 cc -Wall -m32 -S -masm=intel  -o hello.s hello.i
 ```
 
+Dacă programele scrise în limbaje de nivel înalt ajung să fie portate ușor pentru procesoare diferite (arm, powerpc, x86, etc.), cele scrise în limbaj de asamblare sunt implementări specifice unei anumite arhitecturi. Limbaje de nivel înalt reprezintă o formă mai abstractă de rezolvare a unei probleme, din punctul de vedere al unui procesor, motiv pentru care și acestea trebuie traduse în limbaj de asamblare în cele din urmă, pentru a se putea ajunge la un binar care poate fi rulat. Mai multe detalii în laboratoarele următoare.
 
-## Toolchain
+## Exerciții
 
-În cadrul laboratoarelor vom folosi:
-- asamblorul [NASM](https://www.nasm.us/)
-- linkerul din cadrul suitei gcc
+> **NOTE:** În cadrul laboratoarelor vom folosi repository-ul de Git de IOCLA: https://github.com/systems-cs-pub-ro/iocla.
+> Repository-ul este clonat pe desktopul mașinii virtuale.
+> Pentru a îl actualiza, folosiți comanda `git pull origin master` din interiorul directorului în care se află repository-ul (`~/Desktop/iocla`).
+> Recomandarea este să îl actualizați cât mai frecvent, înainte să începeți lucrul, pentru a vă asigura că aveți versiunea cea mai recentă.
+> Dacă doriți să descărcați repository-ul în altă locație, folosiți comanda `git clone https://github.com/systems-cs-pub-ro/iocla ${target}`
+> Pentru mai multe informații despre folosirea utilitarului `git`, urmați ghidul de la [Git Immersion](https://gitimmersion.com/).
 
-Pentru analiza codului si debugging vom folosi `gdb` si `Ghidra`.
+> **NOTE:**
+> Cele mai multe dintre exerciții se desfășoară pe o arhitectură x86 (32 de biți, i386).
+> Pentru a putea compila / linka pe 32 de biți atunci când sistemul vostru este pe 64 de biți, aveți nevoie de pachete specifice.
+> Pe o distribuție Debian / Ubuntu, instalați pachetele folosind comanda:
+> ```
+> sudo apt install gcc-multilib libc6-dev-i386
+> ```
 
-## Ghidra
+**Pentru exersarea informațiilor legate de linking, parcurgem mai multe exerciții.**
+**În cea mai mare parte, acestea sunt dedicate observării procesului de linking, cele marcate cu sufixul `-tut` sau `-obs`.**
+**Unele exerciții necesită modificări pentru a repara probleme legate de linking, cele marcate cu sufixul `-fix`, altele au drept scop exersarea unor noțiuni (cele marcate cu sufixul `-diy`) sau dezvoltarea / completarea unor fișiere (cele marcate cu sufixul `-dev`).**
+**Fiecare exercițiu se găsește într-un director indexat; cele mai multe fișiere cod sursă și fișiere `Makefile` sunt deja prezente.**
 
-**Ghidra** este o unealtă foarte utilă pentru investigarea programelor si `reverse engineering`.
+### 00. Folosirea variabilelor
 
-#### Dezasamblare
-Procesul de dezasamblare este utilizat pentru obținerea unui fișier care conține cod de asamblare,
-pornind de la un fișier binar. Acest proces este întotdeauna posibil, deoarece codul mașină specific
-procesorului are o corespondență directă cu codul de asamblare. De exemplu, operația `add eax, 0x14`,
-prin care la valoarea registrului eax se adaugă 20, se reprezintă întotdeauna folosind codul
-binar `83 c0 14`.
+Accesăm directorul `00-vars-obs/`.
+Vrem să urmărim folosirea variabilelor globale, exportate și neexportate.
 
+În fișierul `hidden.c` avem variabila statică (neexportată) `hidden_value`.
+Variabila este modificată și citită cu ajutorul unor funcții neexportate: `init()`, `get()`, `set()`.
 
-#### Decompilare
-Utilitarul Ghidra poate fi folosit chiar și pentru decompilare. Decompilatorul poate fi folosit
-pentru a obține codul sursă într-un limbaj (relativ) de nivel înalt, care atunci când va fi
-compilat va produce un executabil al cărui comportament va fi la fel ca executabilul original.
-Prin comparație, un dezasamblor traduce un program executabil în limbaj de asamblare în mod exact,
-pentru că există relația de 1:1 între cod mașină și limbaj de asamblare.<br>
+În fișierul `plain.c` avem variabila exportată `age`.
+Aceasta poate fi modificată și citită direct.
 
-Veți utiliza cele două opțiuni în cadrul laboratorului de astăzi, pentru a analiza niște binare simple.
+Aceste variabile sunt folosite direct (`age`) sau indirect (`hidden_value`) în fișierul `main.c`.
+Pentru folosirea lor, se declară funcțiile și variabilele în fișierul `ops.h`.
+Declararea unei funcții se face prin precizarea antetului; declararea unei variabile se face prin prefixarea cu `extern`.
 
->**WARNING**:
-În cadrul laboratoarelor vom folosi repository-ul de git al materiei
-IOCLA - [https://github.com/systems-cs-pub-ro/iocla](https://github.com/systems-cs-pub-ro/iocla).
-Repository-ul este clonat pe desktop-ul
-mașinii virtuale. Pentru a îl actualiza, folosiți comanda `git pull origin master` din interiorul
-directorului în care se află repository-ul (`~/Desktop/iocla`). Recomandarea este să îl actualizați
-cât mai frecvent, înainte să începeți lucrul, pentru a vă asigura că aveți versiunea cea mai recentă.
-Dacă doriți să descărcați repository-ul în altă locație, folosiți comanda
-`git clone https://github.com/systems-cs-pub-ro/iocla ${target}`.
-Pentru mai multe informații despre folosirea utilitarului `git`, urmați ghidul de la [Git Immersion](https://gitimmersion.com/).
+**Compilați și rulați programul obținut pe baza fișierelor de mai sus.**
 
-### 1. Online C Compiling
+### 01. Linkarea unui singur fișier
 
-Un tool interesant pentru a observa cum se traduce codul C în limbaj de asamblare este Compiler Explorer.
+Accesăm directorul `01-one-tut/`.
+Vrem să urmărim comenzile de linkare pentru un singur fișier cod sursă C.
+Fișierul sursă este `hello.c`.
 
-1. Intrați pe [Compiler Explorer](https://gcc.godbolt.org/).
-2. Încărcați programul “sum over array” din exemple (accesibile folosind butonul de load, în formă de dischetă).
-3. Asigurați-vă că `x86-64 gcc 4.8.2` este selectat la `Compiler:`.
-4. Folosiți opțiunea `-m32` (la `Compiler options`) pentru a afișa cod în limbaj de asamblare pe 32 de biți (față de 64 de biți în mod implicit).
-5. Dacă vedeți mesajul `<Compilation failed>`, adăugați opțiunea `-std=c99`.
-6. În continuare codul este destul de greoi. Pentru a putea fi mai human-readable adăugați opțiunea `-O2` la opțiunile de compilare (`Compiler options`).
-7. Se poate observa existența simbolurilor `.L3:` și `.L4:`. Acestea reprezintă puncte fixe în program, label-uri, destul de asemănătoare cu ceea ce se găsește și în C.
-8. Treceți, pe rând, prin compilatoarele corespunzătoare următoarelor arhitecturi: ARM, ARM64, AVR, PowerPC. `Atenție`: pentru ARM, ARM64 și AVR va trebuie să renunțați la flag-ul -m32 setat anterior. Se poate observa cum codul generat diferă de la o arhitectură la alta.
-9. Mai încercați și următoarele compilatoare: `clang` și `icc`. După cum se poate observa, deși este același cod C și aceeași arhitectură, codul generat diferă. Acest lucru se întâmplă pentru că fiecare compilator poate avea o strategie de optimizare și generare de cod diferită.
+În cele trei subdirectoare, se găsesc fișierele de suport pentru următoarele scenarii:
+* `a-dynamic/`: crearea unui fișier executabil dinamic
+* `b-static/`: crearea unui fișier executabil static
+* `c-standalone/`: creare unui fișier executabil standalone, fără biblioteca standard C
 
->**NOTE**:
-[clang](https://clang.llvm.org/) este un compilator open-source de C\C++. Adesea este folosit în IDE-uri datorită mesajelor de eroare de compilare foarte sugestive pe care le produce.
+**În fiecare subdirector folosim comanda `make` pentru a compila fișierul executabil `hello`.**
+**Folosim comanda `file hello` pentru a urmări daca fișierul este compilat dinamic sau static.**
 
->**NOTE**: `icc` este compilatorul de C\C++ al celor de la compania Intel.
+În fișierele `Makefile`, comanda de linkare folosește `gcc`.
+Este comentată o comandă echivalentă care folosește direct `ld`.
+**Pentru a urmări folosirea directă a `ld`, putem comenta comanda `gcc` și decomenta comanda `ld`. Folosim iarăși comanda `file hello`.**
 
+În cazul `c-standalone/`, pentru că nu folosim biblioteca standard C sau bibliotecă runtime C, trebuie să înlocuim funcționalitățile acestora.
+Funcționalitățile sunt înlocuite în fișierul `start.asm` și `puts.asm`.
+Aceste fișiere implementează, respectiv, funcția / simbolul `_start` și funcția `puts`.
+Funcția / simbolul `_start` este, în mod implicit, entry pointul unui program executabil.
+Funcția `_start` este responsabilă pentru apelul funcției `main` și încheierea programului.
+Pentru că nu există bibliotecă standard, aceste două fișiere sunt scrise în limbaj de asamblare și folosesc apeluri de sistem.
 
-Scrieți în zona Code editor următoarea secvență de cod:
-```C
-int simple_fn(void)
-{
-    int a = 1;
-    a++;
-    return a;
-}
+**Adăugați, în fișierul `Makefile` din directorul `c-standalone/`, o comandă care folosește explicit `ld` pentru linkare.**
+
+**Extra**: Accesați directorul `01-one-diy/`.
+Vrem să compilăm și linkăm fișierele cod sursă din fiecare subdirector, asemănător cu ceea ce am făcut anterior. Copiați fișierele `Makefile` și actualizați-le în fiecare subdirector pentru a obține fișierul executabil.
+
+### 02. Linkarea mai multor fișiere
+
+Accesăm directorul `02-multiple-tut/`.
+Vrem să urmărim comenzile de linkare din fișiere multiple cod sursă C: `main.c`, `add.c`, `sub.c`.
+
+La fel ca în exercițiile de mai sus, sunt trei subdirectoare pentru trei scenarii diferite:
+* `a-no-header/`: declararea funcțiilor externe se face direct în fișierul sursă C (`main.c`)
+* `b-header/`: declararea funcțiilor externe se face într-un fișier header separat (`ops.h`)
+* `c-lib/`: declararea funcțiilor externe se face într-un fișier header separat, iar linkarea se face folosind o bibliotecă statică
+
+În fiecare subdirector folosim comanda `make` pentru a compila fișierul executabil `main`.
+
+**Extra**: Accesați directorul `02-multiple-diy/`.
+Vrem să compilăm și linkăm fișierele cod sursă din fiecare subdirector, asemănător cu ceea ce am făcut anterior. Copiați fișierele `Makefile` și actualizați-le în fiecare subdirector pentru a obține fișierul executabil.
+
+### 03. Repararea entry pointului
+
+Accesați directorul `03-entry-fix/`.
+Vrem să urmărim probleme de definire a funcției `main()`.
+
+Accesați subdirectorul `a-c/`.
+Rulați comanda `make`, interpretați eroarea întâlnită și rezolvați-o prin editarea fișierului `hello.c`.
+
+Accesați subdirectorul `b-asm/`.
+Rulați comanda `make`, interpretați eroarea întâlnită și rezolvați-o prin editarea fișierului `hello.asm`.
+
+În subdirectoarele `c-extra-nolibc/` și `d-extra-libc/` veți găsi soluții care nu modifică codul sursă al `hello.c`.
+Aceste soluții modifică, în schimb, sistemul de build pentru a folosi altă funcție, diferită de `main()`, ca prima funcție a programului.
+
+**Extra**: Accesați directorul `03-entry-2-fix/`.
+Rulați comanda `make`, interpretați eroarea întâlnită și rezolvați-o prin editarea fișierului `hello.c`.
+
+### 04. Folosire simboluri (variabile și funcții)
+
+Accesați directorul `04-var-func-fix/`.
+Rulați comanda `make` și rulați executabilul obținut. Interpretați erorile/eroarea întâlnite/întâlnită și rezolvați-le/rezolvați-o prin editarea fișierelor sursă.
+
+### 05. Reparare problemă cu bibliotecă
+
+Accesați directorul `05-lib-fix/`.
+Rulați comanda `make`, interpretați eroarea întâlnită și rezolvați-o prin editarea fișierului `Makefile`.
+Urmăriți fișierul `Makefile` din directorul `02-multiple-tut/c-lib/`.
+
+### 06. Linkare fișier obiect (fără fișier cod sursă)
+
+Accesați directorul `06-obj-link-dev/`.
+Fișierul `shop.o` expune o interfață (funcții și variabile) care permite afișarea unor mesaje.
+Editați fișierul `main.c` pentru a apela corespunzător interfața expusă și pentru a afișa mesajele:
 ```
-Observați codul în limbaj de asamblare atunci când opțiunile de compilare (`Compiler options`) sunt `-m32`, respectiv atunci când opțiunile de compilare sunt `-m32 -O2`. Observați ce efect au opțiunile de optimizare asupra codului în limbaj de asamblare generat.
+price is 21
+quantity is 42
+```
 
+Explorați interfața și conținutul funcțiilor din fisierul `shop.o` folosind `nm` și `objdump`.
 
-### 2. C: Warm-up GOTOs
+### Bonus. Utilizare cod python în C
 
-Intrați în directorul `2-warm-up-gotos`.<br>
+> **INFO:**
+> În cadrul acestui exercițiu veți vedea un exemplu de ceea ce se poate face în urma legării unui anumit tip de fișiere obiect, și anume biblioteci; pentru acest exercițiu este vorba de biblioteca python$(PYTHON_VERSION), unde **PYTHON_VERSION** poate să fie diferit în funcție de soluția propusă de fiecare.
+> Pentru a putea să compilați surse veți avea nevoie de versiunea de dezvoltare pentru python; pentru instalare folosiți comanda de mai jos:
+> ```
+> sudo apt-get install python$(PYTHON_VERSION)-dev
+> ```
+> Înlocuiți $(PYTHON_VERSION) cu versiunea pe care o doriți(**3.8 sau mai recentă**)
 
-**2.1** Modificați codul sursă din fișierul `bogosort.c` ([Bogosort](https://en.wikipedia.org/wiki/Bogosort)) prin înlocuirea instrucțiunii break cu o instrucțiune goto astfel încât funcționalitatea să se păstreze.
+Accesați directorul `bonus-c-python`.
+Fișierul main.c are un exemplu de cum se execută o funcție simplă de afișare a unui mesaj scrisă într-un modul python separat. Plecând de la exemplul prezentat, creați o funcție în modulul numit `my_module.py` aflat în directorul `python-modules`, care primește doi parametri reprezentând două șiruri de caractere și întoarce **poziția primei apariții a celui de-al doilea șir în cadrul primului**, dacă al doilea șir este un subșir al primului șir și **-1** în caz contrar.
+<pre>
+Dacă funcția creată este denumită <b>subsir</b> atunci <b>subsir('123456789', '89')</b> va întoarce 7 iar <b>subsir('123', '4')</b> va întoarce -1. Practic semnătura este de forma <b>subsir(haystack, needle)</b>.
+</pre>
 
-**2.2** În mod asemănător modificați instrucțiunea continue din ignore_the_comments.c astfel încât funcționalitatea codului să se păstreze.
+Rezultatul funcției scrisă în python va fi preluat în codul C și se va afișa un mesaj corespunzător. Urmăriți comentariile cu **TODO** din fișierele `main.c` și `my_module.py`.
 
+> **NOTE:**
+> Puteți să urmăriți și exemplele de [aici](https://www.codeproject.com/Articles/820116/Embedding-Python-program-in-a-C-Cplusplus-code) și/sau [aici](https://www.xmodulo.com/embed-python-code-in-c.html) pentru a vedea cum să preluați rezultatul funcției scrisă în python. De asemenea puteți consulta documentația de [aici](https://docs.python.org/3/c-api/long.html) pentru a vedea cum să faceți conversia rezultatului la un tip de date din C.
 
->**WARNING**: Când scrieți cod cu etichete (label-uri) țineți cont de următoarele recomandări de indentare:
-- Nu indentați etichetele (label-urile). “Lipiți-le” de marginea din stânga a ecranului de editare.
-- O etichetă este singură pe linie. Nu există cod după etichetă.
-- Nu țineți cont de etichete în indetarea codului. Codul trebuie indendat în același mod și cu etichete și fără etichete.
-- Puneți o linie liberă înaintea liniei care conține o etichetă.
-
-
->**NOTE**: [Caz](https://stackoverflow.com/questions/3517726/what-is-wrong-with-using-goto/3517765#3517765) în care goto poate fi util
-
-### 3. C: GOTOs
-
-Intrați în directorul `3-goto-algs`.<br>
-
-Pentru algoritmii de mai jos scrieți cod în C fără a folosi:
-
-- definiții / apeluri de funcţii (exceptând scanf() şi printf())
-- else
-- for
-- while
-- do {} while;
-- construcțiile if care conțin return
-- if-uri imbricate
-
-Singura instrucțiune permisă în cadrul unui if este `goto`.
-
-În alte cuvinte, tot codul trebuie să fie scris în interiorul funcției main, iar modificarea fluxului de control (saltul la altă zonă de cod) se face doar prin intermediul secvențelor de tipul if (conditie) goto eticheta; sau goto eticheta;.
-
-**3.1** Implementați maximul dintr-un vector folosind cod C și constrângerile de mai sus.
-
-**3.2** Implementați căutare binară folosind cod C și constrângerile de mai sus.
-
->**WARNING**: Reiterăm ideea că scenariile de utilizare ale instrucțiunii goto sunt limitate. Exercițiile acestea au valoare didactică pentru a vă acomoda cu instrucțiuni de salt (jump) pe care le vom folosi în dezvoltarea în limbaj de asamblare.
-
-### 4. Tutorial Ghidra: Decompilare
-
-Intrați în directorul `4-tutorial-ghidra`.<br>
-
-În cadrul acestui exercițiu dorim să analizăm funcționalitatea unui binar simplu, care cere introducerea unei parole corecte pentru obținerea unei valori secrete.
-
->**WARNING**: Pentru a rula Ghidra, intrați într-o fereastră de terminal și utilizați comanda `ghidra`.
-
-Pentru început, când rulăm Ghidra ne va apărea o fereastră cu proiectele noastre curente.
-
-![ghidra-initial.png](https://ocw.cs.pub.ro/courses/_media/iocla/laboratoare/ghidra-initial.png?cache=)
-
-Putem să creăm un nou proiect și să îi dăm un nume corespunzător. Pentru asta vom folosi: `File → New Project` (sau folosind combinația de taste `CTRL + N`).
-
-![ghidra-added-project.png](https://ocw.cs.pub.ro/courses/_media/iocla/laboratoare/ghidra-added-project.png?cache=)
-
-După ce am creat proiectul, ca să adăugăm fisierul executabil putem să folosim `File → Import file`, sau să tragem fișierul în directorul pe care l-am creat. Ghidra ne va sugera formatul pe care l-a detectat, precum și compilatorul folosit, în cazuri mai speciale probabil va trebui să schimbăm aceste configurări, dar pentru scopul acestui tutorial, ce ne sugerează Ghidra este perfect.
-
-![ghidra-added-file.png](https://ocw.cs.pub.ro/courses/_media/iocla/laboratoare/ghidra-added-file.png?cache=)
-
-Următorul pas este să analizăm binarul pe care l-am importat. Putem să apăsăm dublu click pe acesta. Ghidra ne va întreba daca vrem să îl analizăm. Pentru a face acest lucru, vom apăsa `Yes` și apoi `Analyze`.
-
-![ghidra-analyzed.png](https://ocw.cs.pub.ro/courses/_media/iocla/laboratoare/ghidra-analyzed.png?cache=)
-
-Dupa ce executabilul a fost analizat, Ghidra afișează o interpretare a informațiilor binare, care include și codul dezasamblat al programului. În continuare, putem de exemplu să încercam să decompilăm o funcție. În partea stângă a ferestrei avem secțiunea `Symbol Tree`; dacă deschidem `Functions`, putem observa că Ghidra ne-a detectat anumite funcții, chiar și funcmain-ul în cazul acestui binar. Astfel dacă dăm dublu click pe main, ne apare în dreapta funcția main decompilată și în fereastra centrală codul în limbajul de asamblare aferent.
-
-![ghidra-main.png](https://ocw.cs.pub.ro/courses/_media/iocla/laboratoare/ghidra-main.png?cache=)
-
-Putem să observăm acum că decompilarea nu este tocmai 1:1 cu codul sursă (din fișierul `crackme.c`), dar ne da o idee destul de bună a acestuia. Urmărind codul decompilat, observăm că funcția main are doi parametri de tip long, care se numesc `param_1` și `param_2`, în loc de prototipul normal `main(int argc, char *argv[])`. Al doilea parametru al main-ului este de tip “vector de pointeri către date de tip caracter” (care este interpretat în mod generic ca “vector de șiruri de caractere”). Mai jos este o perspectivă generică asupra modului de reprezentare al vectorului pentru un sistem de 64 de biți. În reprezentarea de pe a doua linie, interpretați `argp` ca fiind `char *argp = (char *)argv`, pentru a avea sens calculul `argp + N`.
-
-| argv[0]  |      argv[1]  |  argv[2]  |
-|----------|:-------------:|----------:|
-|   argp   |    argp + 8   | argp + 16 |
-
-
-Diferența de tip a parametrilor main-ului este una legată de interpretare: binarul este compilat pentru arhitectura amd64 (care este extensia arhitecturii x86 pentru 64 de biți), iar dimensiunea unui [cuvânt de procesor](https://en.wikipedia.org/wiki/Word_(computer_architecture)) este de 8 octeți (sau 64 de biți). Dimensiunea unui cuvânt de procesor se reflectă în dimensiunea unui pointer, dar și în dimensiunea unui parametru unic (dacă parametrul este mai mic de un cuvânt, se face automat extensia până la dimensiunea unui cuvânt). Totodată, printr-o coincidență, dimensiunea unei variabile de tip `long` este tot de 64 de biți (dimensiunile [tipurilor de date](https://en.wikipedia.org/wiki/C_data_types) în C nu sunt bine stabilite, fiind definite doar niște limite inferioare pentru date). Acest lucru face ca interpretarea celor doi parametri să fie ca `long`, deoarece toți parametrii, indiferent de tip (int sau pointer) se manipulează identic. Calculul `param_2 + 8` este folosit pentru a calcula adresa celui de-al doilea pointer din vectorul `argv` (adică `argv[1]`). Pentru un program compilat pentru arhitectura x86 de 32 de biți, adresa lui `argv[1]` ar fi fost `param_2 + 4`.
-
-Folosind informațiile din codul decompilat putem să ne dăm seama că programul așteaptă o parolă ca argument și aceasta trebuie să fie din 8 caractere și caracterul de pe poziția 3 trebuie să fie 'E'. Deci putem să îi punem ca input o parolă de genul “AAAEAAAA”.
-
-### 5. Reverse: Old hits
-
-Intrați în directorul `5-old-hits`.<br>
-
-Folosind informațiile noi dobândite despre Ghidra, dar și cele învățate anterior despre folosirea gdb, analizați binarul și obțineți informația secretă.
-Programul generează o valoare aleatoare și vă cere să ghiciți o altă valoare calculată pe baza valorii aleatoare.<br>
-
-Mult succes!
-
-## Soluții
-
-Soluțiile pentru exerciții sunt disponibile [aici](https://elf.cs.pub.ro/asm/res/laboratoare/lab-03-sol.zip).  -->
+> **NOTE:**
+> Atenție la versiunea de python pe care o folosiți; nu este recomandată o anumită versiune însă trebuie să aveți în vedere că în funcție de soluția voastră este posibil să fie nevoie să folosiți versiune specifică. Makefile-ul folosește versiunea **3.9**.
