@@ -1,16 +1,16 @@
 #include <stdio.h>
 
-static void hi(void)
+void hi(void)
 {
 	puts("Hi!");
 }
 
-static void bye(void)
+void bye(void)
 {
 	puts("Bye!");
 }
 
-static int main(void)
+int main(void)
 {
 	hi();
 	bye();
