@@ -2,6 +2,7 @@
 
 section .data
     myString: db "Hello, World!", 0
+    myownString: db "Goodbye, World!", 0
 
 section .text
     global main
@@ -12,12 +13,13 @@ main:
     mov eax, 1
     mov ebx, 1
     cmp eax, ebx
-    je print                        ; TODO1: eax > ebx?
+    je print                      ; TODO1: eax > ebx?
     ret
 
 print:
     PRINTF32 `%s\n\x0`, myString
-                                    ; TODO2.2: afisati "Hello, World!" de N ori
-                                    ; TODO2.1: afisati "Goodbye, World!"
-
+    sub ecx,eax
+    cmp ecx,0
+    jne print                                ; TODO2.2: afisati "Hello, World!" de N ori
+    je  PRINTF32 `%s\n\x0`, myownString        ; TODO2.1: afisati "Goodbye, World!"PRINTF32 `%s\n\x1`, myownString
     ret

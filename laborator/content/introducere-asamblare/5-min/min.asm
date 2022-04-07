@@ -6,9 +6,16 @@ section .text
 
 main:
     ;cele doua numere se gasesc in eax si ebx
-    mov eax, 4
-    mov ebx, 1
+    mov eax, 1
+    mov ebx, 3
     ; TODO: aflati minimul
+    mov ecx, eax
+    cmp ecx, ebx
+    jg swap
+back:
     PRINTF32 `%d\n\x0`, eax ; afiseaza minimul
-
     ret
+
+swap:
+    xchg eax, ebx
+    jmp back
