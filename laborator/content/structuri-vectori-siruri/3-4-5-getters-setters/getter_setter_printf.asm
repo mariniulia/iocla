@@ -7,6 +7,7 @@ struc my_struct
 endstruc
 
 section .data
+    ;hello dd 0
     string_format db "%s", 10, 0
     int_format db "%d", 10, 0
     char_format db "%c", 10, 0
@@ -38,6 +39,9 @@ get_int:
     ; The first argument is a pointer to the beginning of the structure, so you
     ; must use it to calculate the actual address of the data you want to get.
     ; TODO --- move the int's value to `eax` to return it
+    mov ebx, [ebp + 8]
+    mov eax, dword[ebx]
+    
 
     ; Instructions used to clear the function stack frame and return to the
     ; caller functions. Do not modify them.
@@ -56,7 +60,8 @@ get_char:
     ; The first argument is a pointer to the beginning of the structure, so you
     ; must use it to calculate the actual address of the data you want to get.
     ; TODO --- move the char's value to `eax` to return it.
-
+    mov ebx, [ebp + 8]
+    mov al, byte[ebx + 4]
     ; Instructions used to clear the function stack frame and return to the
     ; caller functions. Do not modify them.
     leave
@@ -74,7 +79,9 @@ get_string:
     ; The first argument is a pointer to the beginning of the structure, so you
     ; must use it to calculate the actual address of the data you want to get.
     ; TODO --- move the string's address to `eax` to return it.
-
+    mov ebx, [ebp + 8]
+    add ebx, 5
+    mov eax, ebx
     ; Instructions used to clear the function stack frame and return to the
     ; caller functions. Do not modify them.
     leave
@@ -88,6 +95,10 @@ set_int:
     ; Do not modify them.
     push ebp
     mov ebp, esp
+
+    mov ebx, [ebp + 12]
+    mov ecx, [ebp + 8]
+    mov dword[ecx], ebx
 
     ; The first argument is a pointer to the beginning of the structure, so you
     ; must use it to calculate the actual address of the data you want to set.
@@ -106,6 +117,9 @@ set_char:
     push ebp
     mov ebp, esp
 
+    mov ebx, [ebp + 12]
+    mov ecx, [ebp + 8]
+    mov byte[ecx + 4], bl
     ; The first argument is a pointer to the beginning of the structure, so you
     ; must use it to calculate the actual address of the data you want to set.
 
@@ -122,6 +136,16 @@ set_string:
     ; Do not modify them.
     push ebp
     mov ebp, esp
+    mov ebx, [ebp + 12] ; adresa lui s
+    mov eax, [ebp + 8] ; adresa lui obj
+    mov ecx, 32
+
+mod_string:
+    mov dl, byte[ebx + ecx - 1]
+    mov byte[eax + 5 + ecx - 1], dl
+    
+
+    loop mod_string
 
     ; The first argument is a pointer to the beginning of the structure, so you
     ; must use it to calculate the actual address of the data you want to set.
@@ -146,7 +170,12 @@ main:
     add esp, 4
 
     ;uncomment when get_int is ready
-    ;push eax
+    push eax
+    push int_format
+    call printf
+    add esp, 8
+
+    ;push sample_obj
     ;push int_format
     ;call printf
     ;add esp, 8
@@ -160,15 +189,16 @@ main:
     call set_char
     add esp, 8
 
+
     push sample_obj
     call get_char
     add esp, 4
 
     ;uncomment when get_char is ready
-    ;push eax
-    ;push char_format
-    ;call printf
-    ;add esp, 8
+    push eax
+    push char_format
+    call printf
+    add esp, 8
 
     mov edx, new_string
     push edx
@@ -181,10 +211,10 @@ main:
     add esp, 4
 
     ;uncomment when get_string is ready
-    ;push eax
-    ;push string_format
-    ;call printf
-    ;add esp, 8
+    push eax
+    push string_format
+    call printf
+    add esp, 8
 
     xor eax, eax
     leave

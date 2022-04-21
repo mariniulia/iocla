@@ -31,6 +31,7 @@ string_group db "Group: ", 0
 string_gender db "Gender: ", 0
 string_year db "Birth year: ", 0
 
+
 section .text
 extern printf
 global main
@@ -42,6 +43,8 @@ main:
     ; birth_year is 1993
     ; age is 22
     ; group is '323CA'
+
+    
 
     lea ebx, [string_name]
     push ebx
@@ -65,6 +68,11 @@ main:
     call printf
     add esp, 8
 
+    ;mov al, byte[modify_age]
+    ;mov byte[sample_student + age], al
+    mov al, byte[sample_student + age]
+    add al, 1
+    mov byte[sample_student + age], al
     lea ebx, [string_age]
     push ebx
     push string_format
@@ -78,6 +86,14 @@ main:
     call printf
     add esp, 8
 
+
+    ;mov al, byte[string_grupa]
+    ;mov byte[sample_student + group + 2], al
+    ;mov al, byte[modify_gr]
+    ;mov byte[sample_student + group + 2], al
+    mov al, byte[sample_student + group + 2]
+    add al, 2
+    mov byte[sample_student + group + 2], al
     lea ebx, [string_group]
     push ebx
     push string_format
@@ -102,6 +118,11 @@ main:
     call printf
     add esp, 8
 
+    ;mov ax, word[modify_yr]
+    ;mov word[sample_student + birth_year], ax
+    mov ax, word[sample_student + birth_year]
+    sub ax, 1
+    mov word[sample_student + birth_year], ax
     lea ebx, [string_year]
     push ebx
     push string_format
