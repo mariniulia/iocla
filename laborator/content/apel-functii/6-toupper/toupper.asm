@@ -12,7 +12,20 @@ toupper:
     push ebp
     mov ebp, esp
 
-    ; TODO
+ mov eax, [ebp + 8]
+    xor ecx, ecx
+
+iterate:
+    xor ebx, ebx
+    mov bl, byte[eax + ecx]
+    cmp bl, 0
+    je out
+    sub bl, 32
+    mov byte[eax + ecx], bl
+    add ecx, 1
+    jmp iterate
+
+out:; TODO
 
     leave
     ret
