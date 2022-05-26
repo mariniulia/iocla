@@ -32,6 +32,7 @@ main:
 
     ; Initialize local variable.
     mov dword [ebp-4], 0xCAFEBABE
+    
 
     ; Fill data in buffer: buffer[i] = i+1
     ; Use ebx as buffer base address, ecx as index and dl as value.
@@ -46,7 +47,7 @@ fill_byte:
     inc ecx
     cmp ecx, 64
     jl fill_byte
-
+    mov dword [ebx+ecx], 0xDEADBEEF
     ; Print data in buffer.
     push buffer_intro_message
     call printf
@@ -67,7 +68,9 @@ print_byte:
 
     pop ecx	; restore ecx
     inc ecx
-    cmp ecx, 64
+    ;cmp ecx, 64
+    ;je change_variable
+    cmp ecx, 68
     jl print_byte
 
     ; Print new line. C equivalent instruction is puts("").
@@ -81,6 +84,12 @@ print_byte:
     push var_message_and_format
     call printf
     add esp, 8
+    
+; change_variable:
+;     push eax
+;     xor eax,eax
+;     mov al, 
+;     mov byte [ebx+ecx],eax
 
     leave
     ret
