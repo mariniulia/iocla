@@ -35,9 +35,10 @@ int main()
 
 	/* drunk, fix later */
 	while (ago < 0x2a) {
+label:		
 		printf("http://stackoverflow.com/questions/184618/what-is-the-best-comment-in-source-code-you-have-ever-encountered\n");
 		ago++;
-		continue; /* TODO: use goto for Pete's sake! */
+		goto label;
 		printf("Fast inverse square root: %f\n", Q_rsqrt(x)); /* i'm sorry */
 	}
 
